@@ -1,7 +1,10 @@
 #ifndef KALMAN_FILTER_H_
 #define KALMAN_FILTER_H_
 #include "Eigen/Dense"
+#include "tools.h"
 
+
+// Kalman filter base class.
 class KalmanFilter {
 public:
 
@@ -11,17 +14,11 @@ public:
   // state covariance matrix
   Eigen::MatrixXd P_;
 
-  // state transition matrix
+  // state transistion matrix
   Eigen::MatrixXd F_;
 
   // process covariance matrix
   Eigen::MatrixXd Q_;
-
-  // measurement matrix
-  Eigen::MatrixXd H_;
-
-  // measurement covariance matrix
-  Eigen::MatrixXd R_;
 
   /**
    * Constructor
@@ -34,35 +31,59 @@ public:
   virtual ~KalmanFilter();
 
   /**
-   * Init Initializes Kalman filter
-   * @param x_in Initial state
-   * @param P_in Initial state covariance
-   * @param F_in Transition matrix
-   * @param H_in Measurement matrix
-   * @param R_in Measurement covariance matrix
-   * @param Q_in Process covariance matrix
+   * @brief Get the current state of the kalman filter
+   *
+   * @return The Kalman Filter State
    */
-  void Init(Eigen::VectorXd &x_in, Eigen::MatrixXd &P_in, Eigen::MatrixXd &F_in,
-      Eigen::MatrixXd &H_in, Eigen::MatrixXd &R_in, Eigen::MatrixXd &Q_in);
+  Eigen::VectorXd GetState();
+
 
   /**
-   * Prediction Predicts the state and the state covariance
-   * using the process model
-   * @param delta_T Time between k and k+1 in s
+   * @brief Determine if the kalman filter is initialized
+   *
+   * @return True when initialized, False when not initialized
    */
-  void Predict();
+  bool IsInitialized();
 
   /**
-   * Updates the state by using standard Kalman Filter equations
-   * @param z The measurement at k+1
+   * @brief Feed the kalman filter with the first measurement
+   *
+   * @param z The first measurement
+   * @param timestamp The time of the first measurement
+   */
+  void Feed(const Eigen::VectorXd &z,
+            long long timestamp);
+
+  /**
+   * @brief Predict the state and the state covariance using the process model.
+   *
+   * @param timestamp The offset of time to perform the state prediction
+   */
+  void Predict(long long timestamp);
+
+  /**
+   * @brief Update the state by using Kalman Filter equations
+   *
+   * @param z The new measurement
    */
   void Update(const Eigen::VectorXd &z);
 
-  /**
-   * Updates the state by using Extended Kalman Filter equations
-   * @param z The measurement at k+1
-   */
-  void UpdateEKF(const Eigen::VectorXd &z);
+private:  
+
+  const float noise_ax = 9;
+  const float noise_ay = 9;
+  
+  // check if the kalman filter has
+  // been primed with the first measurement
+  bool is_initialized_;
+
+  // previous measurement timestamp
+  long long previous_timestamp_;
+
+
+protected:
+  // tool object used to compute Jacobian and RMSE
+  Tools tools;
 
 };
 
